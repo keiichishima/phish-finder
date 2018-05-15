@@ -6,10 +6,17 @@ from datetime import datetime
 import websockets
 
 async def _server(websocket, path):
-    while True:
-        now = datetime.utcnow().isoformat() + 'Z'
-        await websocket.send(now)
-        await asyncio.sleep(5)
+    with open('test.txt', 'r') as _f:
+        _f.seek(0, 2)
+        while True:
+            _cur = _f.tell()
+            _line = _f.readline()
+            if not _line:
+                _f.seek(_cur)
+                await asyncio.sleep(1)
+            else:
+                await websocket.send(_line)
+
 
 _start_server = websockets.serve(_server, '127.0.0.1', 5678)
 _loop = asyncio.get_event_loop()
