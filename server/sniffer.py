@@ -21,7 +21,7 @@ from url2vec import _str2bagofbytes as bob
 BATCHSIZE = 100
 
 _url_buffer = []
-_ws =websocket.create_connection('ws://127.0.0.1:5678')
+_ws = websocket.create_connection('ws://127.0.0.1:5678')
 
 class MiyamotoModel(Chain):
     def __init__(self, _n_units, _n_out, _dropout_ratio):
@@ -68,7 +68,9 @@ def _eval_urls():
     _labels = np.zeros(len(_vectors), dtype=np.int32)
     _ds = TupleDataset(_vectors, _labels)
     _scores = _verify(_model, _ds)
-    _res = [[str(_u['time']), _u['host']+_u['path'], float(_s)]
+    _res = [{'time': _u['time'],
+             'url': _u['host']+_u['path'],
+             'score': float(_s)}
             for _u, _s in zip(_url_buffer, _scores)]
     _ws.send(json.dumps(_res))
 
@@ -86,11 +88,10 @@ def _store_url(_u):
 def _pkt_callback(_pkt):
     if not _pkt.haslayer(http.HTTPRequest):
         return
-    _time = datetime.fromtimestamp(int(_pkt.time))
     _http_layer = _pkt.getlayer(http.HTTPRequest)
     _host = _http_layer.fields['Host'].decode('utf-8')
     _path = _http_layer.fields['Path'].decode('utf-8')
-    _store_url({'time': _time,
+    _store_url({'time': _pkt.time,
                 'host': _host,
                 'path': _path})
 
