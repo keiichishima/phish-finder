@@ -1,0 +1,9 @@
+.benign {
+    color: #FFF;
+    background-color: #55F;
+}
+
+.suspicious {
+    color: #FFF;
+    background-color: #F55;
+}

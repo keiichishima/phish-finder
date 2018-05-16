@@ -1,24 +1,25 @@
 #!/usr/bin/env python
 
-import asyncio
-from datetime import datetime
+from websocket_server import WebsocketServer
 
-import websockets
+_clients = {}
 
-async def _server(websocket, path):
-    with open('test.txt', 'r') as _f:
-        _f.seek(0, 2)
-        while True:
-            _cur = _f.tell()
-            _line = _f.readline()
-            if not _line:
-                _f.seek(_cur)
-                await asyncio.sleep(1)
-            else:
-                await websocket.send(_line)
+def _new_client(_client, _server):
+    print(_client['id'], 'arrived')
+    _clients[_client['id']] = _client
 
+def _client_left(_client, _server):
+    print(_client['id'], 'left')
+    del _clients[_client['id']]
 
-_start_server = websockets.serve(_server, '127.0.0.1', 5678)
-_loop = asyncio.get_event_loop()
-_loop.run_until_complete(_start_server)
-_loop.run_forever()
+def _message_received(_client, _server, _msg):
+    for _id in _clients.keys():
+        if _id == _client['id']:
+            continue
+        _server.send_message(_clients[_id], _msg)
+
+_server = WebsocketServer(5678, '127.0.0.1')
+_server.set_fn_new_client(_new_client)
+_server.set_fn_client_left(_client_left)
+_server.set_fn_message_received(_message_received)
+_server.run_forever()
