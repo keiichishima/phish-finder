@@ -13,7 +13,7 @@
       <div class="container">
 	<div id="bigtitle" class="jumbotron" style="display:none">
 	  <h1>Phish Finder (Beta)</h1>
-	  <p class="lead">A demonstration of URL classification using
+	  <p>A demonstration of URL classification using
 	    Neural Networking developed by <b>the Network Machine
 	      Learning (NML) project</b>
 	    (<a href="https://nml.ai/">https://nml.ai/</a>).  For more
@@ -23,15 +23,21 @@
 	    original paper</a> presented at the 1st International
 	    Workshop on Network Intelligence.</p>
 	  <p>This work was supported by JST CREST Grant
-	    Number JPMJCR1783, Japan.</p>
-	  <p onclick="lessInfo()" style="font-size:small; text-decoration:underline;">(less info)</p>
+	    Number JPMJCR1783, Japan.
+	    <button onclick="lessInfo()"
+		    class="btn btn-secondary"
+		    style="font-size:x-small">Collapse</button>
+	  </p>
 	</div>
 	<div id="smalltitle">
 	  <h1>Phish Finder (Beta)</h1>
 	  <p>A demonstration of URL classification using
 	    Neural Networking developed by <b>the Network Machine
-		Learning (NML) project</b> (<a href="https://nml.ai/">https://nml.ai/</a>).</p>
-	  <p onclick="moreInfo()" style="font-size:small; text-decoration:underline;">(more info)</p>
+		Learning (NML) project</b> (<a href="https://nml.ai/">https://nml.ai/</a>).
+	    <button onclick="moreInfo()"
+		    class="btn btn-primary"
+		    style="font-size:x-small">Learn more</button>
+	  </p>
 	</div>
       </div>
     </div>
@@ -41,7 +47,7 @@
 	  <thead>
 	    <th class="col-sm-2" scope="col">Time</th>
 	    <th class="col-sm-8" scope="col">URL</th>
-	    <th class="col-sm-2" scope="col">Score</th>
+	    <th class="col-sm-2" scope="col">Phishing probability</th>
 	  </thead>
 	  <tbody id="table_body">
 	  </tbody>

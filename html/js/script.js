@@ -32,17 +32,20 @@ function wsOnMessage(_event) {
     _data = JSON.parse(_event.data);
     for (var _i = 0; _i < _data.length; _i = _i + 1) {
 	var _time = formatTimestamp(_data[_i].time);
-	var _url = _data[_i].url.slice(0,60);
-	var _score = _data[_i].score;
+	var _url = _data[_i].url
+	var _url_short = _url.slice(0,80);
+	var _score = (Math.tanh(_data[_i].score) + 1) * 0.5
+	if (_score < 0.1) {
+	    continue
+	}
 	var _row = $('<tr/>');
 	$('<td/>', {text: _time}).appendTo(_row);
-	$('<td/>', {text: _url}).appendTo(_row);
-	var _sctd = $('<td/>', {text: _score})
-	if (_score > 0) {
-	    _sctd.attr({class: 'suspicious'});
-	} else {
-	    _sctd.attr({class: 'benign'});
-	}
+	$('<td/>', {html: '<a href="http://' + _url + '">' + 'http://' + _url_short + '</a>'}).appendTo(_row);
+	var _sctd = $('<td/>', {text: (_score * 100).toFixed() + '%'});
+	_red_value = (_score * 255).toFixed();
+	_blue_value = ((1 - _score) * 255).toFixed();
+	_sctd.attr({style: 'color: white; background-color: rgb('
+		    + _red_value + ',0,' + _blue_value + ')'})
 	_sctd.appendTo(_row);
 	_row.hide().prependTo('#table_body').show('fast');
     }
