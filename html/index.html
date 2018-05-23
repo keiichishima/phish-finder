@@ -11,7 +11,7 @@
     <script type="text/javascript" src="./js/script.js"></script>
     <div id="header">
       <div class="container">
-	<div class="jumbotron">
+	<div id="bigtitle" class="jumbotron" style="display:none">
 	  <h1>Phish Finder (Beta)</h1>
 	  <p class="lead">A demonstration of URL classification using
 	    Neural Networking developed by <b>the Network Machine
@@ -24,6 +24,14 @@
 	    Workshop on Network Intelligence.</p>
 	  <p>This work was supported by JST CREST Grant
 	    Number JPMJCR1783, Japan.</p>
+	  <p onclick="lessInfo()" style="font-size:small; text-decoration:underline;">(less info)</p>
+	</div>
+	<div id="smalltitle">
+	  <h1>Phish Finder (Beta)</h1>
+	  <p>A demonstration of URL classification using
+	    Neural Networking developed by <b>the Network Machine
+		Learning (NML) project</b> (<a href="https://nml.ai/">https://nml.ai/</a>).</p>
+	  <p onclick="moreInfo()" style="font-size:small; text-decoration:underline;">(more info)</p>
 	</div>
       </div>
     </div>

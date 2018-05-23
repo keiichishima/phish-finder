@@ -65,3 +65,14 @@ function wsOnError(_event) {
 $(document).ready(function() {
     wsInit();
 })
+
+
+function moreInfo() {
+    $('#smalltitle').hide('fast');
+    $('#bigtitle').show('fast');
+}
+
+function lessInfo() {
+    $('#smalltitle').show('fast');
+    $('#bigtitle').hide('fast');
+}
