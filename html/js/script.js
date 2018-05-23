@@ -6,7 +6,7 @@ var webSocket = null;
 function formatTimestamp(_timestamp) {
     var _d = new Date(_timestamp * 1000);
     return (('0000' + _d.getFullYear()).substr(-4)
-	    + '-' + ('00' + _d.getMonth()).substr(-2)
+	    + '-' + ('00' + (Number(_d.getMonth()) + 1)).substr(-2)
 	    + '-' + ('00' + _d.getDate()).substr(-2)
 	    + 'T' + ('00' + _d.getHours()).substr(-2)
 	    + ':' + ('00' + _d.getMinutes()).substr(-2)
