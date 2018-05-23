@@ -4,6 +4,21 @@ Phish-Finder
 This program is a PoC demonstration written for the ShowNet
 contribution at Interop Tokyo 2018.
 
+Prerequisites
+-------------
+
+Some Python packages must be installed before runnig the demo code.
+
+    chainer            4.0.0
+    numpy              1.13.3
+    scapy-http         1.8        
+    scapy-python3      0.23
+    url2vec            https://github.com/keiichishima/url2vec
+    websocket-client   0.47.0     
+    websocket-server   0.4
+
+You may need different version of the above packages or may need some more additional packages depending on your local environment.
+
 Usage
 -----
 
