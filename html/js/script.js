@@ -69,13 +69,12 @@ $(document).ready(function() {
     wsInit();
 })
 
-
 function moreInfo() {
     $('#smalltitle').hide('fast');
-    $('#bigtitle').show('fast');
+    $('#bigtitle').show('slow');
 }
 
 function lessInfo() {
     $('#smalltitle').show('fast');
-    $('#bigtitle').hide('fast');
+    $('#bigtitle').hide('slow');
 }
