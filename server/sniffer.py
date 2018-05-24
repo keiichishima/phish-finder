@@ -12,7 +12,7 @@ import chainer.links as L
 import matplotlib
 matplotlib.use('TkAgg')
 import numpy as np
-from scapy.all import sniff
+from scapy.all import IP, IPv6, sniff
 from scapy.layers import http
 import websocket
 
@@ -70,6 +70,7 @@ def _eval_urls():
     _scores = _verify(_model, _ds)
     _res = [{'time': _u['time'],
              'url': _u['host']+_u['path'],
+             'dst': _u['dst'],
              'score': float(_s)}
             for _u, _s in zip(_url_buffer, _scores)]
     _ws.send(json.dumps(_res))
@@ -88,12 +89,17 @@ def _store_url(_u):
 def _pkt_callback(_pkt):
     if not _pkt.haslayer(http.HTTPRequest):
         return
+    if IP in _pkt:
+        _dst = _pkt[IP].dst
+    elif IPv6 in _pkt:
+        _dst = _pkt[IPv6].dst
     _http_layer = _pkt.getlayer(http.HTTPRequest)
     _host = _http_layer.fields['Host'].decode('utf-8')
     _path = _http_layer.fields['Path'].decode('utf-8')
     _store_url({'time': _pkt.time,
                 'host': _host,
-                'path': _path})
+                'path': _path,
+                'dst': str(_dst)})
 
 if __name__ == '__main__':
     import argparse

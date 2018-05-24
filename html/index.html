@@ -10,7 +10,7 @@
     <script type="text/javascript" src="./js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="./js/script.js"></script>
     <div id="header">
-      <div class="container">
+      <div class="container-fluid">
 	<div id="bigtitle" class="jumbotron" style="display:none">
 	  <h1>Phish Finder (Beta)
 	    <button onclick="lessInfo()"
@@ -46,19 +46,32 @@
       </div>
     </div>
     <div id="main">
-      <div class="container">
-	<table class="table">
+      <div class="container-fluid">
+	<table class="table table-striped">
 	  <thead>
-	    <th class="col-sm-2" scope="col">Time</th>
-	    <th class="col-sm-8" scope="col">URL</th>
-	    <th class="col-sm-2" scope="col">Phishing probability</th>
+	    <tr>
+	      <th scope="col"
+		  style="width: 20%">
+		Time
+	      </th>
+	      <th scope="col"
+		  style="width: 55%">
+		URL
+	      </th>
+	      <th scope="col"
+		  style="width: 15%">
+		IP
+	      </th>
+	      <th scope="col"
+		  style="width: 10%">
+		Probability
+	      </th>
+	    </tr>
 	  </thead>
 	  <tbody id="table_body">
 	  </tbody>
 	</table>
-      </div>
-    </div>
-    <div id="footer">
-    </div>
+      </div> <!-- container-fluid -->
+    </div> <!-- main -->
   </body>
 </html>

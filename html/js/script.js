@@ -3,12 +3,23 @@ var N_MAX_TABLE_ROWS = 100
 var uri = 'ws://127.0.0.1:5678/';
 var webSocket = null;
 
+function moreInfo() {
+    $('#smalltitle').slideUp();
+    $('#bigtitle').slideDown();
+}
+
+function lessInfo() {
+    $('#smalltitle').slideDown();
+    $('#bigtitle').slideUp();
+}
+
 function formatTimestamp(_timestamp) {
     var _d = new Date(_timestamp * 1000);
     return (('0000' + _d.getFullYear()).substr(-4)
 	    + '-' + ('00' + (Number(_d.getMonth()) + 1)).substr(-2)
 	    + '-' + ('00' + _d.getDate()).substr(-2)
-	    + 'T' + ('00' + _d.getHours()).substr(-2)
+	    + 'T'
+	    + ('00' + _d.getHours()).substr(-2)
 	    + ':' + ('00' + _d.getMinutes()).substr(-2)
 	    + ':' + ('00' + _d.getSeconds()).substr(-2)
 	    + '.' + ('000' + _d.getMilliseconds()).substr(-3))
@@ -32,16 +43,20 @@ function wsOnMessage(_event) {
     _data = JSON.parse(_event.data);
     for (var _i = 0; _i < _data.length; _i = _i + 1) {
 	var _time = formatTimestamp(_data[_i].time);
-	var _url = _data[_i].url
-	var _url_short = _url.slice(0,80);
-	var _score = (Math.tanh(_data[_i].score) + 1) * 0.5
+	var _url = _data[_i].url;
+	var _dst = _data[_i].dst;
+	var _score = (Math.tanh(_data[_i].score) + 1) * 0.5;
 	if (_score < 0.1) {
-	    continue
+	    continue;
 	}
 	var _row = $('<tr/>');
-	$('<td/>', {text: _time}).appendTo(_row);
-	$('<td/>', {html: '<a href="http://' + _url + '">' + 'http://' + _url_short + '</a>'}).appendTo(_row);
-	var _sctd = $('<td/>', {text: (_score * 100).toFixed() + '%'});
+	$('<td/>', {html: _time}).appendTo(_row);
+	$('<td/>', {html: '<a href="http://' + _url + '">'
+		    + 'http://' + _url
+		    + '</a>',
+		    style: 'word-break: break-all;'}).appendTo(_row);
+	$('<td/>', {text: _dst}).appendTo(_row);
+	var _sctd = $('<td/>', { text: (_score * 100).toFixed() + '%'});
 	_red_value = (_score * 255).toFixed();
 	_blue_value = ((1 - _score) * 255).toFixed();
 	_sctd.attr({style: 'color: white; background-color: rgb('
@@ -68,13 +83,3 @@ function wsOnError(_event) {
 $(document).ready(function() {
     wsInit();
 })
-
-function moreInfo() {
-    $('#smalltitle').hide('fast');
-    $('#bigtitle').show('slow');
-}
-
-function lessInfo() {
-    $('#smalltitle').show('fast');
-    $('#bigtitle').hide('slow');
-}
