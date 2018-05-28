@@ -54,13 +54,17 @@ function wsOnMessage(_event) {
     for (var _i = 0; _i < _data.length; _i = _i + 1) {
 	var _time = formatTimestamp(_data[_i].time);
 	var _url = _data[_i].url;
+	var _url_short = _url;
+	if (_url.length > 100) {
+	    _url_short = _url.slice(0, 100) + '...';
+	}
 	var _src = _data[_i].src;
 	var _dst = _data[_i].dst;
 	var _score = (Math.tanh(_data[_i].score) + 1) * 0.5;
 	var _row = $('<tr/>');
 	$('<td/>', {html: _time}).appendTo(_row);
 	$('<td/>', {html: '<a href="http://' + _url + '">'
-		    + 'http://' + _url
+		    + 'http://' + _url_short
 		    + '</a>',
 		    style: 'word-break: break-all;'}).appendTo(_row);
 	$('<td/>', {html: _src + '<br/>' + _dst}).appendTo(_row);
