@@ -63,7 +63,7 @@ function wsOnMessage(_event) {
 	var _score = (Math.tanh(_data[_i].score) + 1) * 0.5;
 	var _row = $('<tr/>');
 	$('<td/>', {html: _time}).appendTo(_row);
-	$('<td/>', {html: '<a href="http://' + _url + '">'
+	$('<td/>', {html: '<a target="_blank" href="http://' + _url + '">'
 		    + 'http://' + _url_short
 		    + '</a>',
 		    style: 'word-break: break-all;'}).appendTo(_row);
