@@ -9,7 +9,7 @@
     <script type="text/javascript" src="./js/jquery-3.3.1.min.js"></script>
     <script type="text/javascript" src="./js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="./js/script.js"></script>
-    <div id="header">
+    <div id="header" class="p-3">
       <div class="container-fluid">
 	<div id="bigtitle" class="jumbotron" style="display:none">
 	  <h1>Phish Finder (Beta)
@@ -45,32 +45,80 @@
 	</div>
       </div>
     </div>
-    <div id="main">
+    <div id="main" class="p-3">
       <div class="container-fluid">
-	<table class="table table-striped">
-	  <thead>
-	    <tr>
-	      <th scope="col"
-		  style="width: 20%">
-		Time
-	      </th>
-	      <th scope="col"
-		  style="width: 55%">
-		URL
-	      </th>
-	      <th scope="col"
-		  style="width: 15%">
-		IP
-	      </th>
-	      <th scope="col"
-		  style="width: 10%">
-		Probability
-	      </th>
-	    </tr>
-	  </thead>
-	  <tbody id="table_body">
-	  </tbody>
-	</table>
+	<ul class="nav nav-tabs">
+	  <li class="nav-item">
+	    <a href="#alerts-tab"
+	       class="nav-link active"
+	       data-toggle="tab">
+	      Alerts
+	    </a>
+	  </li>
+	  <li class="nav-item">
+	    <a href="#live-tab"
+	       class="nav-link"
+	       data-toggle="tab">
+	      Live
+	    </a>
+	  </li>
+	</ul>
+	<div class="tab-content">
+	  <div id="alerts-tab" class="tab-pane active">
+	    <table class="table table-striped">
+	      <thead>
+		<tr>
+		  <th scope="col"
+		      style="width: 20%">
+		    Time
+		  </th>
+		  <th scope="col"
+		      style="width: 55%">
+		    URL
+		  </th>
+		  <th scope="col"
+		      style="width: 15%">
+		    From<br/>
+		    To
+		  </th>
+		  <th scope="col"
+		      style="width: 10%">
+		    Probability
+		  </th>
+		</tr>
+	      </thead>
+	      <tbody id="alerts-table-body">
+	      </tbody>
+	    </table>
+	  </div> <!-- #alerts-tab -->
+	  <div id="live-tab" class="tab-pane">
+	    <table class="table table-striped">
+	      <thead>
+		<tr>
+		  <th scope="col"
+		      style="width: 20%">
+		    Time
+		  </th>
+		  <th scope="col"
+		      style="width: 55%">
+		    URL
+		  </th>
+		  <th scope="col"
+		      style="width: 15%">
+		    From<br/>
+		    To
+		  </th>
+		  <th scope="col"
+		      style="width: 10%">
+		    Probability
+		  </th>
+		</tr>
+	      </thead>
+	      <tbody id="live-table-body">
+	      </tbody>
+	    </table>
+	  </div> <!-- #live-tab -->
+	</div> <!-- tab-content -->
       </div> <!-- container-fluid -->
     </div> <!-- main -->
   </body>

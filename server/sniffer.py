@@ -70,6 +70,7 @@ def _eval_urls():
     _scores = _verify(_model, _ds)
     _res = [{'time': _u['time'],
              'url': _u['host']+_u['path'],
+             'src': _u['src'],
              'dst': _u['dst'],
              'score': float(_s)}
             for _u, _s in zip(_url_buffer, _scores)]
@@ -90,8 +91,10 @@ def _pkt_callback(_pkt):
     if not _pkt.haslayer(http.HTTPRequest):
         return
     if IP in _pkt:
+        _src = _pkt[IP].src
         _dst = _pkt[IP].dst
     elif IPv6 in _pkt:
+        _src = _pkt[IPv6].src
         _dst = _pkt[IPv6].dst
     _http_layer = _pkt.getlayer(http.HTTPRequest)
     _host = _http_layer.fields['Host'].decode('utf-8')
@@ -99,6 +102,7 @@ def _pkt_callback(_pkt):
     _store_url({'time': _pkt.time,
                 'host': _host,
                 'path': _path,
+                'src': str(_src),
                 'dst': str(_dst)})
 
 if __name__ == '__main__':
