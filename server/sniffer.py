@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import json
+import os
 import time
 
 import chainer
@@ -60,6 +61,20 @@ def _verify(_model, _dataset):
 
     return _res
 
+def _log_results(_res_json):
+    _now = datetime.now()
+    _log_dir = '{logdir}/{year:04d}/{month:02d}/{day:02d}/{hour:02d}'.format(
+        logdir=_args.logdir,
+        year=_now.year,
+        month=_now.month,
+        day=_now.day,
+        hour=_now.hour)
+    os.makedirs(_log_dir, exist_ok=True)
+    _log_file = '{log_dir}/{min:02d}'.format(
+        log_dir=_log_dir, min=_now.minute)
+    with open(_log_file, 'w') as _f:
+        _f.write(_res_json + '\n')
+
 def _eval_urls():
     _vectors = np.asarray([np.concatenate(
         (bob(_u['host']), bob(_u['path'])))
@@ -74,7 +89,9 @@ def _eval_urls():
              'dst': _u['dst'],
              'score': float(_s)}
             for _u, _s in zip(_url_buffer, _scores)]
-    _ws.send(json.dumps(_res))
+    _res_json = json.dumps(_res)
+    _log_results(_res_json)
+    _ws.send(_res_json)
 
 _last_eval = time.time()
 def _store_url(_u):
@@ -113,6 +130,10 @@ if __name__ == '__main__':
                          dest='interface',
                          required=True,
                          help='Interface name')
+    _parser.add_argument('-d',
+                         dest='logdir',
+                         default='log',
+                         help='Log directory')
     _args = _parser.parse_args()
 
     _model = L.Classifier(MiyamotoModel(_n_units=256,
