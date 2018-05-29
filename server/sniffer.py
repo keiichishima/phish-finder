@@ -2,7 +2,12 @@
 
 from datetime import datetime
 import json
+import logging
+import logging.handlers
+import math
 import os
+import platform
+HOSTNAME = platform.uname()[1]
 import time
 
 import chainer
@@ -20,9 +25,10 @@ import websocket
 from url2vec import _str2bagofbytes as bob
 
 BATCHSIZE = 100
+WEBSOCKET_SERVER_URL='ws://127.0.0.1:5678'
 
+# URL storage
 _url_buffer = []
-_ws = websocket.create_connection('ws://127.0.0.1:5678')
 
 class MiyamotoModel(Chain):
     def __init__(self, _n_units, _n_out, _dropout_ratio):
@@ -75,6 +81,22 @@ def _log_results(_res_json):
     with open(_log_file, 'w') as _f:
         _f.write(_res_json + '\n')
 
+_month_text = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+_syslog_format = '{datetime} {hostname} CEF:0|NML|Phish_Finder|0.1|5000000|WebReputation|{severity}|cn1=3 cn1Label={hostname} dvchost={hostname} request={url} msg=Suspicious'
+def _syslog_results(_res):
+    _now = datetime.now()
+    for _r in _res:
+        if _r['prob'] < _args.logthresh:
+            continue
+        _datetime = '{m} {d:2d} {H:02d}:{M:02d}:{S:02d}'.format(
+            m=_month_text[_now.month - 1], d=_now.day,
+            H=_now.hour, M=_now.minute, S=_now.second)
+        _syslog_text = _syslog_format.format(
+            datetime=_datetime, hostname=HOSTNAME,
+            severity=5, url='http://' + _r['url'])
+        _logger.warn(_syslog_text)
+
 def _eval_urls():
     _vectors = np.asarray([np.concatenate(
         (bob(_u['host']), bob(_u['path'])))
@@ -87,8 +109,10 @@ def _eval_urls():
              'url': _u['host']+_u['path'],
              'src': _u['src'],
              'dst': _u['dst'],
-             'score': float(_s)}
+             'score': float(_s),
+             'prob': 0.5 * (math.tanh(_s) + 1)}
             for _u, _s in zip(_url_buffer, _scores)]
+    _syslog_results(_res)
     _res_json = json.dumps(_res)
     _log_results(_res_json)
     _ws.send(_res_json)
@@ -134,14 +158,38 @@ if __name__ == '__main__':
                          dest='logdir',
                          default='log',
                          help='Log directory')
+    _parser.add_argument('-l',
+                         dest='loghost',
+                         default='127.0.0.1',
+                         help='Syslog host')
+    _parser.add_argument('-p',
+                         dest='logport',
+                         default=logging.handlers.SYSLOG_UDP_PORT,
+                         help='Syslog port')
+    _parser.add_argument('-t',
+                         dest='logthresh',
+                         default=0.6,
+                         help='Syslog trigger threshold')
     _args = _parser.parse_args()
 
+    # Restore the neural network model
     _model = L.Classifier(MiyamotoModel(_n_units=256,
                                         _n_out=1,
                                         _dropout_ratio=0.75),
                           lossfun=F.sigmoid_cross_entropy,
                           accfun=F.binary_accuracy)
     serializers.load_npz('Miyamoto_20170425.model.npz', _model)
+
+    # Setup a websocket handler
+    _ws = websocket.create_connection(WEBSOCKET_SERVER_URL)
+
+    # Setup a syslog handler
+    _logger = logging.getLogger('Phish_Finder')
+    _logger.setLevel(logging.DEBUG)
+    _lhandler = logging.handlers.SysLogHandler(address=(_args.loghost,
+                                                        _args.logport))
+    _lhandler.setLevel(logging.WARN)
+    _logger.addHandler(_lhandler)
 
     sniff(iface=_args.interface,
           prn=_pkt_callback,

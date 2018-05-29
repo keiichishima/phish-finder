@@ -60,7 +60,7 @@ function wsOnMessage(_event) {
 	}
 	var _src = _data[_i].src;
 	var _dst = _data[_i].dst;
-	var _score = (Math.tanh(_data[_i].score) + 1) * 0.5;
+	var _prob = _data[_i].prob;
 	var _row = $('<tr/>');
 	$('<td/>', {html: _time}).appendTo(_row);
 	$('<td/>', {html: '<a target="_blank" href="http://' + _url + '">'
@@ -68,13 +68,13 @@ function wsOnMessage(_event) {
 		    + '</a>',
 		    style: 'word-break: break-all;'}).appendTo(_row);
 	$('<td/>', {html: _src + '<br/>' + _dst}).appendTo(_row);
-	var _sctd = $('<td/>', { text: (_score * 100).toFixed() + '%'});
-	_red_value = (_score * 255).toFixed();
-	_blue_value = ((1 - _score) * 255).toFixed();
+	var _sctd = $('<td/>', { text: (_prob * 100).toFixed() + '%'});
+	_red_value = (_prob * 255).toFixed();
+	_blue_value = ((1 - _prob) * 255).toFixed();
 	_sctd.attr({style: 'color: white; background-color: rgb('
 		    + _red_value + ',0,' + _blue_value + ')'})
 	_sctd.appendTo(_row);
-	if (_score < 0.1) {
+	if (_prob < 0.1) {
 	    _row.hide().prependTo('#live-table-body').show('fast');
 	} else {
 	    _row.hide().prependTo('#alerts-table-body').show('fast');
