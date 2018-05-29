@@ -15,9 +15,10 @@ _parser.add_argument('-r',
                      help='preload root directory')
 _args = _parser.parse_args()
 
+_filepaths = []
 for _root, _dirs, _filenames in os.walk(_args.root):
-    _filepaths = [os.path.join(_root, _filename)
-                  for _filename in _filenames]
+    _filepaths.extend([os.path.join(_root, _filename)
+                      for _filename in _filenames])
 
 for _filepath in _filepaths:
     with open(_filepath, 'r') as _f:
