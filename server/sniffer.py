@@ -83,18 +83,21 @@ def _log_results(_res_json):
 
 _month_text = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-_syslog_format = '{datetime} {hostname} CEF:0|NML|Phish_Finder|0.1|5000000|WebReputation|{severity}|cn1=3 cn1Label={hostname} dvchost={hostname} request={url} msg=Suspicious'
+_syslog_format = '{datetime} {hostname} CEF: 0|NML Project|Phish Finder|0.1b|100101|WEB_THREAT_DETECTION|{severity}|dvchost={hostname} app=HTTP appGroup=HTTP dst={dstip} src={srcip} request={url} msg=Suspicious rt={ldatetime}'
 def _syslog_results(_res):
     _now = datetime.now()
     for _r in _res:
         if _r['prob'] < _args.logthresh:
             continue
+        _sev = int(_r['prob'] * 10)
         _datetime = '{m} {d:2d} {H:02d}:{M:02d}:{S:02d}'.format(
             m=_month_text[_now.month - 1], d=_now.day,
             H=_now.hour, M=_now.minute, S=_now.second)
         _syslog_text = _syslog_format.format(
             datetime=_datetime, hostname=HOSTNAME,
-            severity=5, url='http://' + _r['url'])
+            severity=_sev, srcip=_r['src'], dstip=_r['dst'],
+            url='http://' + _r['url'],
+            ldatetime=_datetime + ' GMT+0900')
         _logger.warn(_syslog_text)
 
 def _eval_urls():
