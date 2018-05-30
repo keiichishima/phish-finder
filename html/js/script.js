@@ -74,10 +74,9 @@ function wsOnMessage(_event) {
 	_sctd.attr({style: 'color: white; background-color: rgb('
 		    + _red_value + ',0,' + _blue_value + ')'})
 	_sctd.appendTo(_row);
-	if (_prob < 0.1) {
-	    _row.hide().prependTo('#live-table-body').show('fast');
-	} else {
-	    _row.hide().prependTo('#alerts-table-body').show('fast');
+	_row.prependTo('#live-table-body');
+	if (_prob > 0.1) {
+	    _row.clone().prependTo('#alerts-table-body');
 	}
     }
 
