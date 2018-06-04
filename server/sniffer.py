@@ -11,12 +11,13 @@ HOSTNAME = platform.uname()[1]
 import time
 
 import chainer
-from chainer import Chain, serializers
+from chainer import Chain, cuda, serializers
+from chainer.cuda import to_gpu, to_cpu
 from chainer.datasets import TupleDataset
 import chainer.functions as F
 import chainer.links as L
-import matplotlib
-matplotlib.use('TkAgg')
+#import matplotlib
+#matplotlib.use('TkAgg')
 import numpy as np
 from scapy.all import IP, IPv6, sniff
 from scapy.layers import http
@@ -62,7 +63,7 @@ def _verify(_model, _dataset):
         with chainer.using_config('train', False):
             _y = _model.predictor(_x)
         _y = _y.array
-        # _y = to_cpu(_y)
+        _y = to_cpu(_y)
         _res.extend(_y)
 
     return _res
@@ -143,6 +144,9 @@ def _pkt_callback(_pkt):
     _http_layer = _pkt.getlayer(http.HTTPRequest)
     _host = _http_layer.fields['Host'].decode('utf-8')
     _path = _http_layer.fields['Path'].decode('utf-8')
+    _path_idx = _path.find(_host)
+    if _path_idx > 0:
+        _path = _path[_path_idx + len(_host):]
     _store_url({'time': _pkt.time,
                 'host': _host,
                 'path': _path,
@@ -173,6 +177,10 @@ if __name__ == '__main__':
                          dest='logthresh',
                          default=0.6,
                          help='Syslog trigger threshold')
+    _parser.add_argument('-g',
+                         dest='gpu_id',
+                         default=0,
+                         help='GPU ID')
     _args = _parser.parse_args()
 
     # Restore the neural network model
@@ -182,6 +190,8 @@ if __name__ == '__main__':
                           lossfun=F.sigmoid_cross_entropy,
                           accfun=F.binary_accuracy)
     serializers.load_npz('Miyamoto_20170425.model.npz', _model)
+    cuda.get_device(_args.gpu_id).use()
+    _model.to_gpu(_args.gpu_id)
 
     # Setup a websocket handler
     _ws = websocket.create_connection(WEBSOCKET_SERVER_URL)
@@ -196,5 +206,5 @@ if __name__ == '__main__':
 
     sniff(iface=_args.interface,
           prn=_pkt_callback,
-          filter='tcp port 80',
+          filter='tcp port 80 or tcp port 8080',
           store=0)

@@ -1,7 +1,7 @@
 var N_MAX_ALERTS_TABLE_ROWS = 1000
 var N_MAX_LIVE_TABLE_ROWS = 50
 
-var uri = 'ws://127.0.0.1:5678/';
+var uri = 'ws://172.16.18.220:5678/';
 var webSocket = null;
 
 function moreInfo() {
