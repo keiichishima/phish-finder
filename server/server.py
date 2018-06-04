@@ -24,7 +24,7 @@ if __name__ == '__main__':
     _parser = argparse.ArgumentParser()
     _parser.add_argument('-b',
                          dest='bind_address',
-                         default='127.0.0.1',
+                         default='all',
                          help='Bind address ("-b all" for wildcard')
     _args = _parser.parse_args()
 
