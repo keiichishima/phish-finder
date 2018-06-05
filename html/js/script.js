@@ -1,5 +1,7 @@
 var N_MAX_ALERTS_TABLE_ROWS = 1000
 var N_MAX_LIVE_TABLE_ROWS = 50
+var PROB_ATTENUATION = 0.8
+var ALERT_PROB_THRESHOLD = 0.5
 
 var uri = 'ws://172.16.18.220:5678/';
 var webSocket = null;
@@ -60,7 +62,7 @@ function wsOnMessage(_event) {
 	}
 	var _src = _data[_i].src;
 	var _dst = _data[_i].dst;
-	var _prob = _data[_i].prob;
+	var _prob = _data[_i].prob * PROB_ATTENUATION;
 	var _row = $('<tr/>');
 	$('<td/>', {html: _time}).appendTo(_row);
 	$('<td/>', {html: '<a target="_blank" href="http://' + _url + '">'
@@ -74,7 +76,7 @@ function wsOnMessage(_event) {
 		    + _h_value + ',100%, 70%)'})
 	_sctd.appendTo(_row);
 	_row.prependTo('#live-table-body');
-	if (_prob > 0.1) {
+	if (_prob > ALERT_PROB_THRESHOLD) {
 	    _row.clone().prependTo('#alerts-table-body');
 	}
     }
