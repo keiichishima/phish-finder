@@ -145,8 +145,10 @@ def _pkt_callback(_pkt):
     _host = _http_layer.fields['Host'].decode('utf-8')
     _path = _http_layer.fields['Path'].decode('utf-8')
     _path_idx = _path.find(_host)
-    if _path_idx > 0:
+    if _path_idx >= 0:
         _path = _path[_path_idx + len(_host):]
+        if _path == '':
+            _path = '/'
     _store_url({'time': _pkt.time,
                 'host': _host,
                 'path': _path,
