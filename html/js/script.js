@@ -87,10 +87,19 @@ function wsOnMessage(_event) {
 
 function wsOnClose(_event) {
     console.info('ws closed.');
+    webSocket = null;
+    setTimeout(reconnect, 1000);
 }
 
 function wsOnError(_event) {
     console.info('ws error.');
+    webSocket = null;
+    setTimeout(reconnect, 1000);
+}
+
+function reconnect() {
+    console.info('reconnecting.');
+    wsInit();
 }
 
 $(document).ready(function() {
