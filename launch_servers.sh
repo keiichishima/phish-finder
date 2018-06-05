@@ -9,10 +9,13 @@ WS_ADDR=all
 
 # The mirror port interface name
 #
-#MIRROR_IFNAME=enp4s0f0 #<= final config
-MIRROR_IFNAME=enp3s0f0 
+MIRROR_IFNAME=enp4s0f0
 
 # Loghost
+#
+# Assuming that rsyslogd is configured to forward user.* messages to the
+# Interop log servers
+#
 LOGHOST=127.0.0.1
 
 echo "Launching WebSocket server"
