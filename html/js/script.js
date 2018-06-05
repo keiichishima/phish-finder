@@ -72,10 +72,6 @@ function wsOnMessage(_event) {
 	_h_value = ((_prob * 120) + 240).toFixed();
 	_sctd.attr({style: 'color: white; background-color: hsl('
 		    + _h_value + ',100%, 70%)'})
-	//_red_value = (_prob * 255).toFixed();
-	//_blue_value = ((1 - _prob) * 255).toFixed();
-	//_sctd.attr({style: 'color: white; background-color: rgb('
-	//	    + _red_value + ',64,' + _blue_value + ')'})
 	_sctd.appendTo(_row);
 	_row.prependTo('#live-table-body');
 	if (_prob > 0.1) {
