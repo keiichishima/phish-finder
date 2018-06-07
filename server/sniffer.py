@@ -31,6 +31,9 @@ WEBSOCKET_SERVER_URL='ws://127.0.0.1:5678'
 # URL storage
 _url_buffer = []
 
+# White list
+_while_list = set()
+
 class MiyamotoModel(Chain):
     def __init__(self, _n_units, _n_out, _dropout_ratio):
         super(MiyamotoModel, self).__init__()
@@ -79,7 +82,7 @@ def _log_results(_res_json):
     os.makedirs(_log_dir, exist_ok=True)
     _log_file = '{log_dir}/{min:02d}'.format(
         log_dir=_log_dir, min=_now.minute)
-    with open(_log_file, 'w') as _f:
+    with open(_log_file, 'a') as _f:
         _f.write(_res_json + '\n')
 
 _month_text = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -149,6 +152,11 @@ def _pkt_callback(_pkt):
         _path = _path[_path_idx + len(_host):]
         if _path == '':
             _path = '/'
+
+    # Interop hack
+    if (_host + _path) in _white_list:
+        return
+
     _store_url({'time': _pkt.time,
                 'host': _host,
                 'path': _path,
@@ -177,6 +185,7 @@ if __name__ == '__main__':
                          help='Syslog port')
     _parser.add_argument('-t',
                          dest='logthresh',
+                         type=float,
                          default=0.6,
                          help='Syslog trigger threshold')
     _parser.add_argument('-g',
@@ -205,6 +214,10 @@ if __name__ == '__main__':
                                                         _args.logport))
     _lhandler.setLevel(logging.WARN)
     _logger.addHandler(_lhandler)
+
+    # Interop hack
+    with open('whitelist.txt', 'r') as _f:
+        _white_list = set([_u.rstrip() for _u in _f])
 
     sniff(iface=_args.interface,
           prn=_pkt_callback,
