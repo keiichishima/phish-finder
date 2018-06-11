@@ -30,6 +30,7 @@ WEBSOCKET_SERVER_URL='ws://127.0.0.1:5678'
 
 # URL storage
 _url_buffer = []
+_url_buffer_all = []
 
 # White list
 _while_list = set()
@@ -85,6 +86,21 @@ def _log_results(_res_json):
     with open(_log_file, 'a') as _f:
         _f.write(_res_json + '\n')
 
+# BEGIN: Interop hack
+def _log_urls(_res_json):
+    _now = datetime.now()
+    _log_dir = 'interop_urls/{year:04d}/{month:02d}/{day:02d}/{hour:02d}'.format(
+        year=_now.year,
+        month=_now.month,
+        day=_now.day,
+        hour=_now.hour)
+    os.makedirs(_log_dir, exist_ok=True)
+    _log_file = '{log_dir}/{min:02d}'.format(
+        log_dir=_log_dir, min=_now.minute)
+    with open(_log_file, 'a') as _f:
+        _f.write(_res_json + '\n')
+# END: Interop hack
+
 _month_text = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 _syslog_format = '{datetime} {hostname} CEF: 0|NML Project|Phish Finder|0.1b|100101|WEB_THREAT_DETECTION|{severity}|dvchost={hostname} app=HTTP appGroup=HTTP dst={dstip} src={srcip} request={url} msg=Suspicious rt={ldatetime}'
@@ -135,6 +151,11 @@ def _store_url(_u):
     _last_eval = _now
     del _url_buffer[:]
 
+    # BEGIN: Interop hack
+    _log_urls(json.dumps(_url_buffer_all))
+    del _url_buffer_all[:]
+    # END: Interop hack
+
 def _pkt_callback(_pkt):
     if not _pkt.haslayer(http.HTTPRequest):
         return
@@ -145,6 +166,8 @@ def _pkt_callback(_pkt):
         _src = _pkt[IPv6].src
         _dst = _pkt[IPv6].dst
     _http_layer = _pkt.getlayer(http.HTTPRequest)
+    if 'Host' not in _http_layer.fields:
+        return
     _host = _http_layer.fields['Host'].decode('utf-8')
     _path = _http_layer.fields['Path'].decode('utf-8')
     _path_idx = _path.find(_host)
@@ -153,9 +176,20 @@ def _pkt_callback(_pkt):
         if _path == '':
             _path = '/'
 
-    # Interop hack
+    # BEGIN: Interop hack
+    # memory URL
+    _url_buffer_all.append({'time': _pkt.time,
+                            'host': _host,
+                            'path': _path,
+                            'src': str(_src),
+                            'dst': str(_dst)})
+    # Ignore empty path names
+    if _path == '/':
+        return
+    # exclude white listed URLs
     if (_host + _path) in _white_list:
         return
+    # END: Interop hack
 
     _store_url({'time': _pkt.time,
                 'host': _host,
