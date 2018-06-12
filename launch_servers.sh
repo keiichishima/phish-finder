@@ -22,20 +22,35 @@ SYSLOG_THRESH=0.8
 LOGHOST=127.0.0.1
 
 echo "Launching WebSocket server"
-tmux new-session -d -s ws_pf
-tmux send -t ws_pf "cd /home/major/keiichi/phish-finder/server; while true; do python server.py -b ${WS_ADDR}; sleep 1; done
+tmux list-sessions | grep ws_pf
+if [ $? -eq 1 ]; then
+	tmux new-session -d -s ws_pf
+else
+	tmux send-keys -t ws_pf C-c
+fi
+tmux send -t ws_pf "cd /home/major/keiichi/phish-finder/server; python server.py -b ${WS_ADDR}
 "
 sleep 1
 
 echo "Launching Sniffer"
-tmux new-session -d -s sniff_pf
-tmux send -t sniff_pf "cd /home/major/keiichi/phish-finder/server; while true; do sudo sh sniffer-interop.sh -i ${MIRROR_IFNAME} -l ${LOGHOST} -t ${SYSLOG_THRESH}; sleep 1; done
+tmux list-sessions | grep sniff_pf
+if [ $? -eq 1 ]; then
+	tmux new-session -d -s sniff_pf
+else
+	tmux send-keys -t sniff_pf C-c
+fi
+tmux send -t sniff_pf "cd /home/major/keiichi/phish-finder/server; sudo sh sniffer-interop.sh -i ${MIRROR_IFNAME} -l ${LOGHOST} -t ${SYSLOG_THRESH}
 "
 sleep 1
 
 echo "Launching Web server"
-tmux new-session -d -s http_pf
-tmux send -t http_pf "cd /home/major/keiichi/phish-finder/html; while true; do python -m http.server ${HTTP_PORT}; sleep 1; done
+tmux list-sessions | grep http_pf
+if [ $? -eq 1 ]; then
+	tmux new-session -d -s http_pf
+else
+	tmux send-keys -t http_pf C-c
+fi
+tmux send -t http_pf "cd /home/major/keiichi/phish-finder/html; python -m http.server ${HTTP_PORT}
 "
 
 echo "All services are started"
