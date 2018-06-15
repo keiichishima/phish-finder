@@ -12,7 +12,7 @@ WS_ADDR=all
 MIRROR_IFNAME=enp4s0f0
 
 # syslog threshold
-SYSLOG_THRESH=0.8
+SYSLOG_THRESH=0.95
 
 # Loghost
 #

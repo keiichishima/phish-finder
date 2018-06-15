@@ -1,7 +1,7 @@
 var N_MAX_ALERTS_TABLE_ROWS = 200
 var N_MAX_LIVE_TABLE_ROWS = 50
 var PROB_ATTENUATION = 0.8
-var ALERT_PROB_THRESHOLD = 0.5
+var ALERT_PROB_THRESHOLD = 0.7
 
 var uri = 'ws://172.16.18.220:5678/';
 var webSocket = null;

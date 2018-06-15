@@ -54,21 +54,26 @@ def _verify(_model, _dataset):
     _res = []
     _batchsize = BATCHSIZE
 
-    for _i in range((len(_dataset)//_batchsize) + 1):
-        _idx = _i * _batchsize
-        if _idx + _batchsize < len(_dataset):
-            _dsub = _dataset[_idx:_idx+_batchsize]
-        else:
-            _dsub = _dataset[_idx:]
-        _x = [_d[0] for _d in _dsub]
-        #_t = [_d[1] for _d in _dsub]
+    # XXX
+    try:
+        for _i in range((len(_dataset)//_batchsize) + 1):
+            _idx = _i * _batchsize
+            if _idx + _batchsize < len(_dataset):
+                _dsub = _dataset[_idx:_idx+_batchsize]
+            else:
+                _dsub = _dataset[_idx:]
+            _x = [_d[0] for _d in _dsub]
+            #_t = [_d[1] for _d in _dsub]
 
-        _x = _model.xp.asarray(_x)
-        with chainer.using_config('train', False):
-            _y = _model.predictor(_x)
-        _y = _y.array
-        _y = to_cpu(_y)
-        _res.extend(_y)
+            _x = _model.xp.asarray(_x)
+            with chainer.using_config('train', False):
+                _y = _model.predictor(_x)
+            _y = _y.array
+            _y = to_cpu(_y)
+            _res.extend(_y)
+    except:
+        print('BUG')
+        return None
 
     return _res
 
@@ -107,6 +112,9 @@ _syslog_format = '{datetime} {hostname} CEF: 0|NML Project|Phish Finder|0.1b|100
 def _syslog_results(_res):
     _now = datetime.now()
     for _r in _res:
+        # exclude white listed URLs
+        if _r['url'] in _white_list:
+            continue
         if _r['prob'] < _args.logthresh:
             continue
         _sev = int(_r['prob'] * 10)
@@ -128,6 +136,9 @@ def _eval_urls():
     _labels = np.zeros(len(_vectors), dtype=np.int32)
     _ds = TupleDataset(_vectors, _labels)
     _scores = _verify(_model, _ds)
+    # XXX
+    if _scores == None:
+        return
     _res = [{'time': _u['time'],
              'url': _u['host']+_u['path'],
              'src': _u['src'],
@@ -138,6 +149,14 @@ def _eval_urls():
     _syslog_results(_res)
     _res_json = json.dumps(_res)
     _log_results(_res_json)
+    # BEGIN: Interop Hack
+    _res2 = []
+    for _r in _res:
+        if _r['url'] in _white_list:
+            continue
+        _res2.append(_r)
+    _res_json = json.dumps(_res2)
+    # END: Interop Hack
     _ws.send(_res_json)
 
 _last_eval = time.time()
@@ -185,9 +204,6 @@ def _pkt_callback(_pkt):
                             'dst': str(_dst)})
     # Ignore empty path names
     if _path == '/':
-        return
-    # exclude white listed URLs
-    if (_host + _path) in _white_list:
         return
     # END: Interop hack
 
