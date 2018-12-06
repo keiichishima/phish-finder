@@ -75,7 +75,7 @@ function wsOnMessage(_event) {
 		    + _red_value + ',0,' + _blue_value + ')'})
 	_sctd.appendTo(_row);
 	_row.prependTo('#live-table-body');
-	if (_prob > 0.1) {
+	if (_prob > 0.9) {
 	    _row.clone().prependTo('#alerts-table-body');
 	}
     }
