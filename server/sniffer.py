@@ -22,6 +22,7 @@ matplotlib.use('TkAgg')
 import numpy as np
 from scapy.all import IP, IPv6, sniff
 from scapy.layers import http
+import slackweb
 import websocket
 
 from url2vec import _str2bagofbytes as bob
@@ -102,6 +103,20 @@ def _syslog_results(_res):
             ldatetime=_datetime + ' GMT+0900')
         _logger.warn(_syslog_text)
 
+_slack_format = '{} accessed by {} might be a phishing site ({:2.2f}%) at {}'
+def _slack_results(_res):
+    if _args.slackwebhook == '':
+        return
+    for _r in _res:
+        if _r['prob'] < _args.logthresh:
+            continue
+        _slack.notify(
+            text=_slack_format.format(
+                'http://' + _r['url'],
+                _r['src'],
+                _r['prob'] * 100,
+                datetime.now()))
+
 def _eval_urls():
     _vectors = np.asarray([np.concatenate(
         (bob(_u['host']), bob(_u['path'])))
@@ -118,6 +133,7 @@ def _eval_urls():
              'prob': 0.5 * (math.tanh(_s) + 1)}
             for _u, _s in zip(_url_buffer, _scores)]
     _syslog_results(_res)
+    _slack_results(_res)
     _res_json = json.dumps(_res)
     _log_results(_res_json)
     _ws.send(_res_json)
@@ -177,16 +193,21 @@ if __name__ == '__main__':
                          dest='logdir',
                          default='log',
                          help='Log directory')
-    _parser.add_argument('-l',
+    _parser.add_argument('-loghost',
                          dest='loghost',
                          default='127.0.0.1',
                          help='Syslog host')
-    _parser.add_argument('-p',
+    _parser.add_argument('-logport',
                          dest='logport',
                          default=logging.handlers.SYSLOG_UDP_PORT,
                          help='Syslog port')
+    _parser.add_argument('-slackhook',
+                         dest='slackwebhook',
+                         default='',
+                         help='Slack Webhook URL')
     _parser.add_argument('-t',
                          dest='logthresh',
+                         type=float,
                          default=0.6,
                          help='Syslog trigger threshold')
     _args = _parser.parse_args()
@@ -209,6 +230,9 @@ if __name__ == '__main__':
                                                         _args.logport))
     _lhandler.setLevel(logging.WARN)
     _logger.addHandler(_lhandler)
+
+    if _args.slackwebhook != '':
+        _slack = slackweb.Slack(url=_args.slackwebhook)
 
     if _args.interface == 'urldump':
         _line = sys.stdin.readline()
