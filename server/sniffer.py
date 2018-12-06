@@ -8,7 +8,9 @@ import math
 import os
 import platform
 HOSTNAME = platform.uname()[1]
+import sys
 import time
+from urllib.parse import urlparse
 
 import chainer
 from chainer import Chain, serializers
@@ -149,6 +151,20 @@ def _pkt_callback(_pkt):
                 'src': str(_src),
                 'dst': str(_dst)})
 
+def _urldump_callback(_src, _dst, _url):
+    if not _url.startswith('http://'):
+        _url = 'http://'+ _url
+    _time = time.time()
+    _u = urlparse(_url)
+    _host = _dst if _u.netloc == '' else _u.netloc
+    _path = '/' if _u.path == '' else _u.path
+    _path += _u.query
+    _store_url({'time': _time,
+                'host': _host,
+                'path': _path,
+                'src': _src,
+                'dst': _dst})
+
 if __name__ == '__main__':
     import argparse
 
@@ -194,7 +210,15 @@ if __name__ == '__main__':
     _lhandler.setLevel(logging.WARN)
     _logger.addHandler(_lhandler)
 
-    sniff(iface=_args.interface,
-          prn=_pkt_callback,
-          filter='tcp port 80',
-          store=0)
+    if _args.interface == 'urldump':
+        _line = sys.stdin.readline()
+        while _line:
+            # format from urldump should be 'srcip,dstip,url'
+            _src, _dst, _url = _line.rstrip().split(',', 2)
+            _urldump_callback(_src, _dst, _url)
+            _line = sys.stdin.readline()
+    else:
+        sniff(iface=_args.interface,
+              prn=_pkt_callback,
+              filter='tcp port 80',
+              store=0)
