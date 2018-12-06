@@ -99,18 +99,21 @@ def _syslog_results(_res):
         _syslog_text = _syslog_format.format(
             datetime=_datetime, hostname=HOSTNAME,
             severity=_sev, srcip=_r['src'], dstip=_r['dst'],
-            url='http://' + _r['url'],
+            url='h__p://' + _r['url'],
             ldatetime=_datetime + ' GMT+0900')
         _logger.warn(_syslog_text)
 
 _slack_format = '{} accessed by {} might be a phishing site ({:2.2f}%) at {}'
 def _slack_results(_res):
-    if _args.slackwebhook == '':
+    if _slack is None:
         return
     for _r in _res:
         if _r['prob'] < _args.logthresh:
             continue
         _slack.notify(
+            channel=_args.slackchannel,
+            username='Phish Finder (Beta)',
+            icon_emoji=':fishing_pole_and_fish:',
             text=_slack_format.format(
                 'http://' + _r['url'],
                 _r['src'],
@@ -201,7 +204,11 @@ if __name__ == '__main__':
                          dest='logport',
                          default=logging.handlers.SYSLOG_UDP_PORT,
                          help='Syslog port')
-    _parser.add_argument('-slackhook',
+    _parser.add_argument('-slackchannel',
+                         dest='slackchannel',
+                         default='alerts',
+                         help='Slack channel name')
+    _parser.add_argument('-slackwebhook',
                          dest='slackwebhook',
                          default='',
                          help='Slack Webhook URL')
@@ -231,6 +238,7 @@ if __name__ == '__main__':
     _lhandler.setLevel(logging.WARN)
     _logger.addHandler(_lhandler)
 
+    _slack = None
     if _args.slackwebhook != '':
         _slack = slackweb.Slack(url=_args.slackwebhook)
 
@@ -240,6 +248,7 @@ if __name__ == '__main__':
             # format from urldump should be 'srcip,dstip,url'
             _src, _dst, _url = _line.rstrip().split(',', 2)
             _urldump_callback(_src, _dst, _url)
+            time.sleep(0.1)
             _line = sys.stdin.readline()
     else:
         sniff(iface=_args.interface,
