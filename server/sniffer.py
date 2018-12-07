@@ -103,7 +103,7 @@ def _syslog_results(_res):
             ldatetime=_datetime + ' GMT+0900')
         _logger.warn(_syslog_text)
 
-_slack_format = '{} accessed by {} might be a phishing site ({:2.2f}%) at {}'
+_slack_format = '*{}* accessed by *{}* might be a phishing site (*{:2.2f}%*) at {}'
 def _slack_results(_res):
     if _slack is None:
         return
@@ -115,7 +115,7 @@ def _slack_results(_res):
             username='Phish Finder (Beta)',
             icon_emoji=':fishing_pole_and_fish:',
             text=_slack_format.format(
-                'http://' + _r['url'],
+                'h__p://' + _r['url'],
                 _r['src'],
                 _r['prob'] * 100,
                 datetime.now()))
@@ -225,7 +225,7 @@ if __name__ == '__main__':
                                         _dropout_ratio=0.75),
                           lossfun=F.sigmoid_cross_entropy,
                           accfun=F.binary_accuracy)
-    serializers.load_npz('Miyamoto_20170425.model.npz', _model)
+    serializers.load_npz('Miyamoto_20180331.model.npz', _model)
 
     # Setup a websocket handler
     _ws = websocket.create_connection(WEBSOCKET_SERVER_URL)
