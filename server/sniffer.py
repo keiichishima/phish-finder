@@ -8,6 +8,7 @@ import math
 import os
 import platform
 HOSTNAME = platform.uname()[1]
+import socket
 import sys
 import time
 from urllib.parse import urlparse
@@ -289,24 +290,23 @@ if __name__ == '__main__':
         _slack = slackweb.Slack(url=_args.slackwebhook)
 
     if _args.interface == 'urldump':
-        _line = sys.stdin.readline()
-        while _line:
-            # format from urldump should be 'srcip dstip url'
-            try:
-                _src, _dst, _url = _line.rstrip().split(' ', 2)
-                if _is_in_whitelist(_url, _whitelist):
-                    _line = sys.stdin.readline()
-                    continue
-                #_f.write(_line)
-                _urldump_callback(_src, _dst, _url)
-                #time.sleep(0.1)
-            except IndexError as _e:
-                print('In readline loop IndexError:', _e)
-                pass
-            except Exception as _e:
-                print('In readline loop fatal:', _e)
-                sys.exit(-1)
-            _line = sys.stdin.readline()
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as _s:
+            _s.bind(('', 9999))
+            while True:
+                _data, _sender = _s.recvfrom(1500)
+                _line = _data.decode('utf-8')
+                # format from urldump should be 'srcip dstip url'
+                try:
+                    _src, _dst, _url = _line.rstrip().split(' ', 2)
+                    if _is_in_whitelist(_url, _whitelist):
+                        continue
+                    _urldump_callback(_src, _dst, _url)
+                except IndexError as _e:
+                    print('In readline loop IndexError:', _e)
+                    pass
+                except Exception as _e:
+                    print('In readline loop fatal:', _e)
+                    sys.exit(-1)
     else:
         sniff(iface=_args.interface,
               prn=_pkt_callback,
