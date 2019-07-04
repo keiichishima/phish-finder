@@ -17,8 +17,6 @@ from chainer import Chain, serializers
 from chainer.datasets import TupleDataset
 import chainer.functions as F
 import chainer.links as L
-import matplotlib
-matplotlib.use('TkAgg')
 import numpy as np
 from scapy.all import IP, IPv6, sniff
 from scapy.layers import http
@@ -71,6 +69,8 @@ def _verify(_model, _dataset):
     return _res
 
 def _log_results(_res_json):
+    if _args.logdir == None:
+        return
     _now = datetime.now()
     _log_dir = '{logdir}/{year:04d}/{month:02d}/{day:02d}/{hour:02d}'.format(
         logdir=_args.logdir,
@@ -88,6 +88,8 @@ _month_text = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 _syslog_format = '{datetime} {hostname} CEF: 0|NML Project|Phish Finder|0.1b|100101|WEB_THREAT_DETECTION|{severity}|dvchost={hostname} app=HTTP appGroup=HTTP dst={dstip} src={srcip} request={url} msg=Suspicious rt={ldatetime}'
 def _syslog_results(_res):
+    if _args.loghost == None:
+        return
     _now = datetime.now()
     for _r in _res:
         if _r['prob'] < _args.logthresh:
@@ -103,22 +105,48 @@ def _syslog_results(_res):
             ldatetime=_datetime + ' GMT+0900')
         _logger.warn(_syslog_text)
 
-_slack_format = '*{}* accessed by *{}* might be a phishing site (*{:2.2f}%*) at {}'
+_last_notify = time.time()
+_slack_format = 'accessed by *{}* might be a phishing site (*{:2.2f}%*)'
 def _slack_results(_res):
+    global _last_notify
     if _slack is None:
         return
     for _r in _res:
         if _r['prob'] < _args.logthresh:
             continue
-        _slack.notify(
-            channel=_args.slackchannel,
-            username='Phish Finder (Beta)',
-            icon_emoji=':fishing_pole_and_fish:',
-            text=_slack_format.format(
-                'h__p://' + _r['url'],
-                _r['src'],
-                _r['prob'] * 100,
-                datetime.now()))
+        _src = _r['src']
+        if _r['src'].find('.') > 0:
+            _ips = _r['src'].split('.')
+            _src = _ips[0] + '.' + _ips[1] + '.XXX.XXX'
+        elif _r['src'].find(':') > 0:
+            _ips = _r['src'].split(':')
+            _src = _ips[0] + ':' + _ips[1] + '::XXXX'
+        _title_link =  'http://' + _r['url']
+        _text = _slack_format.format(
+                _src,
+                _r['prob'] * 100)
+        _attachment = {
+            'pretext': 'Suspicious web access detected by Phish Finder (Beta) at {}'.format(datetime.now()),
+            'title': _title_link[:60] + '....',
+            'title_link': _title_link,
+            'text': _text,
+            'color': '#FF0000'
+        }
+        try:
+            _now = time.time()
+            if (_now - _last_notify) > 5:
+                # stay calm 5 seconds before sending another message
+                _slack.notify(
+                    channel=_args.slackchannel,
+                    username='Phish Finder (Beta)',
+                    icon_emoji=':fishing_pole_and_fish:',
+                    attachments=[_attachment]
+                )
+                _last_notify = _now
+        except Exception as _e:
+            print('In slack notify:', _e)
+            # XXX
+            assert(False)
 
 def _eval_urls():
     _vectors = np.asarray([np.concatenate(
@@ -176,6 +204,8 @@ def _urldump_callback(_src, _dst, _url):
     _time = time.time()
     _u = urlparse(_url)
     _host = _dst if _u.netloc == '' else _u.netloc
+    if len(_host) == 2:
+        return
     _path = '/' if _u.path == '' else _u.path
     _path += _u.query
     _store_url({'time': _time,
@@ -183,6 +213,13 @@ def _urldump_callback(_src, _dst, _url):
                 'path': _path,
                 'src': _src,
                 'dst': _dst})
+
+def _is_in_whitelist(_url, _whitelist):
+    for _w in _whitelist:
+        if (_w != ''
+            and _url.find(_w) >= 0):
+            return True
+    return False
 
 if __name__ == '__main__':
     import argparse
@@ -194,11 +231,11 @@ if __name__ == '__main__':
                          help='Interface name')
     _parser.add_argument('-d',
                          dest='logdir',
-                         default='log',
+                         default=None,
                          help='Log directory')
     _parser.add_argument('-loghost',
                          dest='loghost',
-                         default='127.0.0.1',
+                         default=None,
                          help='Syslog host')
     _parser.add_argument('-logport',
                          dest='logport',
@@ -210,14 +247,22 @@ if __name__ == '__main__':
                          help='Slack channel name')
     _parser.add_argument('-slackwebhook',
                          dest='slackwebhook',
-                         default='',
+                         default=None,
                          help='Slack Webhook URL')
     _parser.add_argument('-t',
                          dest='logthresh',
                          type=float,
                          default=0.6,
                          help='Syslog trigger threshold')
+    _parser.add_argument('-w',
+                         dest='whitelist',
+                         default='',
+                         help='White list of URLs')
     _args = _parser.parse_args()
+
+    _whitelist = []
+    with open(_args.whitelist, 'r') as _f:
+        _whitelist = _f.read().splitlines()
 
     # Restore the neural network model
     _model = L.Classifier(MiyamotoModel(_n_units=256,
@@ -231,24 +276,36 @@ if __name__ == '__main__':
     _ws = websocket.create_connection(WEBSOCKET_SERVER_URL)
 
     # Setup a syslog handler
-    _logger = logging.getLogger('Phish_Finder')
-    _logger.setLevel(logging.DEBUG)
-    _lhandler = logging.handlers.SysLogHandler(address=(_args.loghost,
-                                                        _args.logport))
-    _lhandler.setLevel(logging.WARN)
-    _logger.addHandler(_lhandler)
+    if _args.loghost != None:
+        _logger = logging.getLogger('Phish_Finder')
+        _logger.setLevel(logging.DEBUG)
+        _lhandler = logging.handlers.SysLogHandler(
+            address=(_args.loghost, _args.logport))
+        _lhandler.setLevel(logging.WARN)
+        _logger.addHandler(_lhandler)
 
     _slack = None
-    if _args.slackwebhook != '':
+    if _args.slackwebhook != None:
         _slack = slackweb.Slack(url=_args.slackwebhook)
 
     if _args.interface == 'urldump':
         _line = sys.stdin.readline()
         while _line:
-            # format from urldump should be 'srcip,dstip,url'
-            _src, _dst, _url = _line.rstrip().split(',', 2)
-            _urldump_callback(_src, _dst, _url)
-            time.sleep(0.1)
+            # format from urldump should be 'srcip dstip url'
+            try:
+                _src, _dst, _url = _line.rstrip().split(' ', 2)
+                if _is_in_whitelist(_url, _whitelist):
+                    _line = sys.stdin.readline()
+                    continue
+                #_f.write(_line)
+                _urldump_callback(_src, _dst, _url)
+                #time.sleep(0.1)
+            except IndexError as _e:
+                print('In readline loop IndexError:', _e)
+                pass
+            except Exception as _e:
+                print('In readline loop fatal:', _e)
+                sys.exit(-1)
             _line = sys.stdin.readline()
     else:
         sniff(iface=_args.interface,
