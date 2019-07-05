@@ -28,6 +28,7 @@ from url2vec import _str2bagofbytes as bob
 
 BATCHSIZE = 100
 WEBSOCKET_SERVER_URL='ws://127.0.0.1:5678'
+EXTRACTOR_PORT=9999
 
 # URL storage
 _url_buffer = []
@@ -291,7 +292,7 @@ if __name__ == '__main__':
 
     if _args.interface == 'urldump':
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as _s:
-            _s.bind(('', 9999))
+            _s.bind(('', EXTRACTOR_PORT))
             while True:
                 _data, _sender = _s.recvfrom(1500)
                 _line = _data.decode('utf-8')
