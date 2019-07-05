@@ -2,6 +2,8 @@
 
 from websocket_server import WebsocketServer
 
+WS_PORT=5678
+
 _clients = {}
 
 def _new_client(_client, _server):
@@ -31,7 +33,7 @@ if __name__ == '__main__':
     if _args.bind_address == 'all':
         _args.bind_address = ''
 
-    _server = WebsocketServer(5678, _args.bind_address)
+    _server = WebsocketServer(WS_PORT, _args.bind_address)
     _server.set_fn_new_client(_new_client)
     _server.set_fn_client_left(_client_left)
     _server.set_fn_message_received(_message_received)
