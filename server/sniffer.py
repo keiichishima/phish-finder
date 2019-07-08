@@ -255,11 +255,6 @@ if __name__ == '__main__':
                          dest='logport',
                          default=logging.handlers.SYSLOG_UDP_PORT,
                          help='Syslog port')
-    _parser.add_argument('-logthresh',
-                         dest='logthresh',
-                         type=float,
-                         default=0.6,
-                         help='Syslog trigger threshold')
     _parser.add_argument('-slackchannel',
                          dest='slackchannel',
                          default='alerts',
@@ -268,6 +263,11 @@ if __name__ == '__main__':
                          dest='slackwebhook',
                          default=None,
                          help='Slack Webhook URL')
+    _parser.add_argument('-logthresh',
+                         dest='logthresh',
+                         type=float,
+                         default=0.6,
+                         help='Syslog/Slack trigger threshold')
     _parser.add_argument('-w',
                          dest='whitelist',
                          default='',
