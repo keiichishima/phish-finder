@@ -19,8 +19,6 @@ from chainer.datasets import TupleDataset
 import chainer.functions as F
 import chainer.links as L
 import numpy as np
-from scapy.all import IP, IPv6, sniff
-from scapy.layers import http
 import slackweb
 import websocket
 
@@ -180,24 +178,6 @@ def _store_url(_u):
     _last_eval = _now
     del _url_buffer[:]
 
-def _pkt_callback(_pkt):
-    if not _pkt.haslayer(http.HTTPRequest):
-        return
-    if IP in _pkt:
-        _src = _pkt[IP].src
-        _dst = _pkt[IP].dst
-    elif IPv6 in _pkt:
-        _src = _pkt[IPv6].src
-        _dst = _pkt[IPv6].dst
-    _http_layer = _pkt.getlayer(http.HTTPRequest)
-    _host = _http_layer.fields['Host'].decode('utf-8')
-    _path = _http_layer.fields['Path'].decode('utf-8')
-    _store_url({'time': _pkt.time,
-                'host': _host,
-                'path': _path,
-                'src': str(_src),
-                'dst': str(_dst)})
-
 def _urldump_callback(_src, _dst, _url):
     if not _url.startswith('http://'):
         _url = 'http://'+ _url
@@ -225,10 +205,6 @@ if __name__ == '__main__':
     import argparse
 
     _parser = argparse.ArgumentParser()
-    _parser.add_argument('-i',
-                         dest='interface',
-                         required=True,
-                         help='Interface name or \'urldump\'')
     _parser.add_argument('-urldumpport',
                          type=int,
                          dest='urldumpport',
@@ -302,26 +278,20 @@ if __name__ == '__main__':
     if _args.slackwebhook != None:
         _slack = slackweb.Slack(url=_args.slackwebhook)
 
-    if _args.interface == 'urldump':
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as _s:
-            _s.bind(('', _args.urldumpport))
-            while True:
-                _data, _sender = _s.recvfrom(1500)
-                _line = _data.decode('utf-8')
-                # format from urldump should be 'srcip dstip url'
-                try:
-                    _src, _dst, _url = _line.rstrip().split(' ', 2)
-                    if _is_in_whitelist(_url, _whitelist):
-                        continue
-                    _urldump_callback(_src, _dst, _url)
-                except IndexError as _e:
-                    print('In readline loop IndexError:', _e)
-                    pass
-                except Exception as _e:
-                    print('In readline loop fatal:', _e)
-                    sys.exit(-1)
-    else:
-        sniff(iface=_args.interface,
-              prn=_pkt_callback,
-              filter='tcp port 80',
-              store=0)
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as _s:
+        _s.bind(('', _args.urldumpport))
+        while True:
+            _data, _sender = _s.recvfrom(1500)
+            _line = _data.decode('utf-8')
+            # format from urldump should be 'srcip dstip url'
+            try:
+                _src, _dst, _url = _line.rstrip().split(' ', 2)
+                if _is_in_whitelist(_url, _whitelist):
+                    continue
+                _urldump_callback(_src, _dst, _url)
+            except IndexError as _e:
+                print('In readline loop IndexError:', _e)
+                pass
+            except Exception as _e:
+                print('In readline loop fatal:', _e)
+                sys.exit(-1)
