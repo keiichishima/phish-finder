@@ -27,8 +27,6 @@ import websocket
 from url2vec import _str2bagofbytes as bob
 
 BATCHSIZE = 100
-WEBSOCKET_SERVER_URL='ws://127.0.0.1:5678'
-EXTRACTOR_PORT=9999
 
 # URL storage
 _url_buffer = []
@@ -230,7 +228,19 @@ if __name__ == '__main__':
     _parser.add_argument('-i',
                          dest='interface',
                          required=True,
-                         help='Interface name')
+                         help='Interface name or \'urldump\'')
+    _parser.add_argument('-urldumpport',
+                         dest='urldumpport',
+                         default=9999,
+                         help='Port # of URLDUMP input')
+    _parser.add_argument('-wshost',
+                         dest='wshost',
+                         default='127.0.0.1',
+                         help='Websocker forwarder host')
+    _parser.add_argument('-wsport',
+                         dest='wsport',
+                         default=5678,
+                         help='Websocker forwarder port')
     _parser.add_argument('-d',
                          dest='logdir',
                          default=None,
@@ -275,7 +285,7 @@ if __name__ == '__main__':
     serializers.load_npz('Miyamoto_20180331.model.npz', _model)
 
     # Setup a websocket handler
-    _ws = websocket.create_connection(WEBSOCKET_SERVER_URL)
+    _ws = websocket.create_connection(f'ws://{_args.wshost}:{_args.wsport}')
 
     # Setup a syslog handler
     if _args.loghost != None:
@@ -292,7 +302,7 @@ if __name__ == '__main__':
 
     if _args.interface == 'urldump':
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as _s:
-            _s.bind(('', EXTRACTOR_PORT))
+            _s.bind(('', _args.urldumppor))
             while True:
                 _data, _sender = _s.recvfrom(1500)
                 _line = _data.decode('utf-8')
