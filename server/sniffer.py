@@ -302,7 +302,7 @@ if __name__ == '__main__':
 
     if _args.interface == 'urldump':
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as _s:
-            _s.bind(('', _args.urldumppor))
+            _s.bind(('', _args.urldumpport))
             while True:
                 _data, _sender = _s.recvfrom(1500)
                 _line = _data.decode('utf-8')
