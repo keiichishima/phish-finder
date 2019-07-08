@@ -230,6 +230,7 @@ if __name__ == '__main__':
                          required=True,
                          help='Interface name or \'urldump\'')
     _parser.add_argument('-urldumpport',
+                         type=int,
                          dest='urldumpport',
                          default=9999,
                          help='Port # of URLDUMP input')
@@ -238,6 +239,7 @@ if __name__ == '__main__':
                          default='127.0.0.1',
                          help='Websocker forwarder host')
     _parser.add_argument('-wsport',
+                         type=int,
                          dest='wsport',
                          default=5678,
                          help='Websocker forwarder port')
@@ -253,6 +255,11 @@ if __name__ == '__main__':
                          dest='logport',
                          default=logging.handlers.SYSLOG_UDP_PORT,
                          help='Syslog port')
+    _parser.add_argument('-logthresh',
+                         dest='logthresh',
+                         type=float,
+                         default=0.6,
+                         help='Syslog trigger threshold')
     _parser.add_argument('-slackchannel',
                          dest='slackchannel',
                          default='alerts',
@@ -261,11 +268,6 @@ if __name__ == '__main__':
                          dest='slackwebhook',
                          default=None,
                          help='Slack Webhook URL')
-    _parser.add_argument('-t',
-                         dest='logthresh',
-                         type=float,
-                         default=0.6,
-                         help='Syslog trigger threshold')
     _parser.add_argument('-w',
                          dest='whitelist',
                          default='',
