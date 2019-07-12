@@ -280,9 +280,9 @@ if __name__ == '__main__':
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as _s:
         _s.bind(('', _args.urldumpport))
-        while True:
-            _data, _sender = _s.recvfrom(1500)
-            _line = _data.decode('utf-8')
+        _sf = _s.makefile()
+        _line = _sf.readline()
+        while _line:
             # format from urldump should be 'srcip dstip url'
             try:
                 _src, _dst, _url = _line.rstrip().split(' ', 2)
@@ -291,7 +291,9 @@ if __name__ == '__main__':
                 _urldump_callback(_src, _dst, _url)
             except IndexError as _e:
                 print('In readline loop IndexError:', _e)
+                _line = _sf.readline()
                 pass
             except Exception as _e:
                 print('In readline loop fatal:', _e)
                 sys.exit(-1)
+            _line = _sf.readline()
